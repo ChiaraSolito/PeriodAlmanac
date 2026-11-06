@@ -67,10 +67,3 @@ def delete_cycle(session: Session, cycle_id: int) -> None:
     session.delete(cycle)
     session.commit()
     recompute_lengths(session)
-
-
-def days_since_last(session: Session, today: date | None = None) -> int | None:
-    last = last_cycle(session)
-    if last is None:
-        return None
-    return ((today or date.today()) - last.start_date).days

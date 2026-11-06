@@ -14,33 +14,61 @@ A personal app that predicts the next period start. Pure Python:
 4. **Fallback:** if the model's prediction differs from the median of the last 12 cycles by more than `max(3 days, 1.5×std)`, or falls outside 20–45 days, the median is used instead. The method used is always shown.
 5. The **window** is the 25th–75th percentile of the last 12 cycles, always widened to contain the predicted date.
 
-## Setup
+## Setup (Windows PowerShell)
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python scripts/import_csv.py        # one time: data/cycles_with_durations.csv -> data/cycles.db
+python scripts\import_csv.py        # optional: start_up.ps1 does this on the first run
 ```
+
+The import loads `data\cycles_with_durations.csv` into `data\cycles.db`. It is safe to re-run: dates already present are skipped.
 
 ### Telegram bot
 1. Create a bot with [@BotFather](https://t.me/BotFather) and copy the token.
 2. `copy .env.example .env` and set `TELEGRAM_TOKEN`.
-3. Start the bot (`python -m app.bot`), send it `/id`, put the number in `ALLOWED_CHAT_ID` and restart. Only that chat can use the bot.
+3. Start the bot, send it `/id`, put the number in `ALLOWED_CHAT_ID` in `.env`, and restart. Only that chat can use the bot, and reminders are sent only once `ALLOWED_CHAT_ID` is set.
 
 ## Running
 
-```bash
-./start_up.sh            # web app + bot (Git Bash)
-```
-or separately:
 ```powershell
-uvicorn app.main:app --reload --host 0.0.0.0
+.\start_up.ps1
+```
+
+The script:
+- uses `.venv\Scripts\python.exe` directly (no need to activate the venv)
+- imports the CSV on the first run, if `data\cycles.db` doesn't exist
+- starts the web app in the background and prints the URLs to open
+- runs the bot in the same window if `TELEGRAM_TOKEN` is set in `.env`; otherwise it starts only the web app
+- stops everything on Ctrl+C
+
+To run the pieces separately (with the venv activated):
+```powershell
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 python -m app.bot
 ```
 
-- Web app: http://127.0.0.1:8000. From your phone on the same Wi-Fi: `http://<PC-IP>:8000`, then "Add to Home Screen".
-- API docs: http://127.0.0.1:8000/docs
+| What | URL |
+|---|---|
+| Web app on this PC | http://127.0.0.1:8000 |
+| Web app from your phone (same Wi-Fi) | `http://<PC-IP>:8000`, printed by `start_up.ps1` (e.g. `http://192.168.1.64:8000`) |
+| API docs | http://127.0.0.1:8000/docs |
+
+On the phone, open the URL and choose **Add to Home Screen** to install it like an app.
+
+## Troubleshooting
+
+- **`ERR_ADDRESS_INVALID` on `http://0.0.0.0:8000`**: `0.0.0.0` is only the address the server listens on (all interfaces), not one you can open. Use `127.0.0.1` on the PC or the LAN IP from your phone.
+- **The phone can't connect**: allow Python through Windows Firewall when prompted (Private networks), and make sure the Wi-Fi network is set to *Private* in Windows. Alternatively, from an administrator PowerShell:
+  ```powershell
+  New-NetFirewallRule -DisplayName "poc_cycle 8000" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow -Profile Private
+  ```
+- **"Running scripts is disabled on this system"**: run `powershell -ExecutionPolicy Bypass -File .\start_up.ps1`, or once: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+- **Emoji errors (`UnicodeEncodeError`) when printing bot messages in the console**: set `$env:PYTHONIOENCODING = "utf-8"`. Telegram itself is not affected.
+- **The bot answers "Non autorizzato"**: `ALLOWED_CHAT_ID` in `.env` doesn't match your chat. Send `/id`, update `.env`, restart.
+- **The first prediction is slow (~5 s)**: the model backtest runs once per data change (ARIMA is the slow one); later requests are cached.
+- **Reminders are missed when the PC is off**: the bot checks once at start-up too, and reminders tolerate missed days. For always-on reminders, it needs to be hosted somewhere that is always running.
 
 ## Bot commands
 
@@ -81,6 +109,8 @@ app/
   bot/__main__.py                  Telegram bot
 scripts/import_csv.py              CSV import
 tests/                             pytest
+start_up.ps1                       starts web app + bot (Windows)
+.env.example                       template for TELEGRAM_TOKEN / ALLOWED_CHAT_ID
 ```
 
 ## Tests

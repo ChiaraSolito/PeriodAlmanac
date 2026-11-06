@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#c2185b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Ciclo">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <title>Ciclo</title>
+</head>
+<body hx-boost="true">
+  <main>
+    {% if request.query_params.get('ok') %}<div class="flash ok">{{ request.query_params.get('ok') }}</div>{% endif %}
+    {% if request.query_params.get('err') %}<div class="flash err">{{ request.query_params.get('err') }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <nav class="tabs">
+    <a href="/" class="{{ 'on' if page == 'home' }}">Previsione</a>
+    <a href="/storico" class="{{ 'on' if page == 'storico' }}">Storico</a>
+    <a href="/statistiche" class="{{ 'on' if page == 'statistiche' }}">Statistiche</a>
+  </nav>
+</body>
+</html>

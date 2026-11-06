@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Prossimo ciclo</h1>
+{% if p %}
+  {% if p.status == 'dimenticato' %}
+  <div class="flash warn">
+    L'ultimo inizio registrato è del {{ fmt(p.last_start) }}, cioè {{ -p.days_to_start + p.length }} giorni fa.
+    Hai dimenticato di registrare qualche ciclo? Aggiungi le date mancanti qui sotto.
+  </div>
+  {% endif %}
+  <section class="card status-{{ p.status }}">
+    <div class="big">{{ fmt(p.start, True) }}</div>
+    <div class="when">{{ when(p.days_to_start) }} · {{ STATUS[p.status] }}</div>
+    <dl>
+      <dt>Finestra</dt><dd>{{ fmt(p.window_low) }} – {{ fmt(p.window_high) }}</dd>
+      <dt>Fine prevista</dt><dd>{{ fmt(p.end) }}</dd>
+      <dt>Durata stimata</dt><dd>{{ p.length }} giorni</dd>
+      <dt>Ultimo inizio</dt><dd>{{ fmt(p.last_start) }}</dd>
+    </dl>
+    <p class="muted">Metodo: {{ method_label(p) }}</p>
+  </section>
+{% else %}
+  <p>Registra almeno due inizi per ottenere una previsione.</p>
+{% endif %}
+
+<h2>Registra un inizio</h2>
+<form method="post" action="/log" class="row">
+  <input type="hidden" name="start_date" value="{{ today }}">
+  <button class="primary">È iniziato oggi</button>
+</form>
+<form method="post" action="/log" class="row">
+  <input type="date" name="start_date" max="{{ today }}" required>
+  <button>Salva data</button>
+</form>
+{% endblock %}

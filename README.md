@@ -74,7 +74,7 @@ On the phone, open the URL and choose **Add to Home Screen** to install it like 
 
 | Command | Description |
 |---|---|
-| `/prossimo` (`/predict`) | Predicted date, window, end date, method |
+| `/prossimo` (aliases `/next`, `/prediction`, `/predict`) | Predicted date, window, end date, method |
 | `/log` | Buttons [Oggi] [Ieri] [Altra data], or `/log 03/11/2026`, `/log ieri` |
 | `/storico` | Last 10 cycles with delete buttons |
 | `/stats` | Statistics + chart |

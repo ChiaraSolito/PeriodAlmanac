@@ -32,7 +32,7 @@ TZ = ZoneInfo(settings.tz)
 
 HELP = (
     "Ciao! Comandi disponibili:\n"
-    "/prossimo – previsione del prossimo ciclo\n"
+    "/prossimo (o /next) – previsione del prossimo ciclo\n"
     "/log – registra un inizio (es. /log oggi, /log 03/11/2026)\n"
     "/storico – ultimi cicli, con possibilità di eliminarli\n"
     "/stats – statistiche e grafico\n"
@@ -273,7 +273,7 @@ def main() -> None:
     app = Application.builder().token(settings.telegram_token).build()
     app.add_handler(CommandHandler("id", cmd_id))
     app.add_handler(CommandHandler(["start", "aiuto", "help"], cmd_help))
-    app.add_handler(CommandHandler(["prossimo", "predict"], cmd_predict))
+    app.add_handler(CommandHandler(["prossimo", "predict", "prediction", "next"], cmd_predict))
     app.add_handler(CommandHandler("log", cmd_log))
     app.add_handler(CommandHandler("stats", cmd_stats))
     app.add_handler(CommandHandler("storico", cmd_history))

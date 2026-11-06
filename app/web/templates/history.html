@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Storico</h1>
+<ul class="list">
+  {% for c in cycles %}
+  <li>
+    <div>
+      <strong>{{ fmt(c.start_date) }}</strong> → {{ fmt(c.end_date) }}
+      <div class="muted">
+        {% if c.cycle_length is none %}primo registrato
+        {% elif c.is_gap %}{{ c.cycle_length }} gg · <span class="tag">intervallo escluso</span>
+        {% else %}{{ c.cycle_length }} gg{% endif %}
+      </div>
+    </div>
+    <form method="post" action="/storico/{{ c.id }}/elimina"
+          onsubmit="return confirm('Eliminare il ciclo del {{ fmt(c.start_date) }}?')">
+      <button class="ghost" aria-label="Elimina">✕</button>
+    </form>
+  </li>
+  {% else %}
+  <li>Nessun ciclo registrato.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

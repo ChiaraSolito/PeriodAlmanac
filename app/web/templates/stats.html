@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Statistiche</h1>
+{% if s.mean is defined %}
+<div class="tiles">
+  <div><span>{{ s.recent_median }}</span>mediana ultimi 12</div>
+  <div><span>{{ s.mean }}</span>media storica</div>
+  <div><span>±{{ s.std }}</span>deviazione</div>
+  <div><span>{{ s.min }}–{{ s.max }}</span>min–max</div>
+</div>
+<p>Tendenza: <strong>{{ s.trend }}</strong> · {{ s.count }} cicli registrati{% if s.gaps %} · {{ s.gaps }} intervalli esclusi{% endif %}</p>
+<img class="chart" src="/api/v1/stats/chart.png" alt="Grafico della durata dei cicli">
+{% else %}
+<p>Dati insufficienti.</p>
+{% endif %}
+{% endblock %}

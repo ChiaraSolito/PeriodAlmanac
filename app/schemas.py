@@ -1,40 +1,36 @@
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from datetime import date
 
-class PredictRequest(BaseModel):
-    recent_data: List[float] = Field(..., description="Most recent time series values")
-    horizon: int = Field(1, gt=0, description="Number of future steps to predict")
+from pydantic import BaseModel
 
 
-class AnalyzeRequest(BaseModel):
-    data: List[float] = Field(..., description="Time series values to analyze")
+class CycleIn(BaseModel):
+    start_date: date
 
 
-class TrainResponse(BaseModel):
-    success: bool
-    samples: int
-    window: int
-    rmse: float
-    message: Optional[str]
+class CycleOut(BaseModel):
+    id: int
+    start_date: date
+    end_date: date
+    cycle_length: int | None
+    is_gap: bool
+    source: str
 
 
-class PredictResponse(BaseModel):
-    success: bool
-    predictions: List[float]
-    message: Optional[str]
+class PredictionOut(BaseModel):
+    last_start: date
+    start: date
+    window_low: date
+    window_high: date
+    end: date
+    length: int
+    method: str
+    model_name: str | None
+    model_raw: float | None
+    mae: float | None
+    status: str
+    days_to_start: int
 
 
-class AnalyzeResponse(BaseModel):
-    success: bool
-    mean: float
-    std: float
-    trend: str
-    seasonality: str
-    message: Optional[str]
-
-class LogRequest(BaseModel):
-    data: List[float] = Field(..., description="Time series values to log")
-
-class LogResponse(BaseModel):
-    success: bool
-    message: Optional[str]
+class BacktestOut(BaseModel):
+    best: str
+    scores: dict[str, float]

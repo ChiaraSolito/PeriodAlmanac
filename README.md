@@ -1,4 +1,4 @@
-# poc_cycle
+# Period Almanac
 
 A personal app that predicts the next period start. Pure Python:
 

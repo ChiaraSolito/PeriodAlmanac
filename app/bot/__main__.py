@@ -6,7 +6,7 @@ from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 
 from sqlmodel import Session
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -266,11 +266,26 @@ async def daily_job(context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+COMMANDS = [
+    BotCommand("prossimo", "Previsione del prossimo ciclo"),
+    BotCommand("log", "Registra un inizio (es. /log oggi, /log 03/11/2026)"),
+    BotCommand("storico", "Ultimi cicli, con eliminazione"),
+    BotCommand("stats", "Statistiche e grafico"),
+    BotCommand("id", "Mostra il tuo chat id"),
+    BotCommand("help", "Elenco dei comandi"),
+]
+
+
+async def post_init(app: Application) -> None:
+    # Fills the "/" menu in the Telegram chat.
+    await app.bot.set_my_commands(COMMANDS)
+
+
 def main() -> None:
     if not settings.telegram_token:
         raise SystemExit("TELEGRAM_TOKEN mancante: copia .env.example in .env e compilalo.")
     init_db()
-    app = Application.builder().token(settings.telegram_token).build()
+    app = Application.builder().token(settings.telegram_token).post_init(post_init).build()
     app.add_handler(CommandHandler("id", cmd_id))
     app.add_handler(CommandHandler(["start", "aiuto", "help"], cmd_help))
     app.add_handler(CommandHandler(["prossimo", "predict", "prediction", "next"], cmd_predict))

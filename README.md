@@ -19,7 +19,7 @@ A personal app that predicts the next period start. Pure Python:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # app + test tools (the server uses requirements.txt)
 python scripts\import_csv.py        # optional: start_up.ps1 does this on the first run
 ```
 
@@ -56,6 +56,10 @@ python -m app.bot
 | API docs | http://127.0.0.1:8000/docs |
 
 On the phone, open the URL and choose **Add to Home Screen** to install it like an app.
+
+## Deployment
+
+In production the app runs 24/7 on an Oracle Cloud Always Free server with Docker Compose, reachable only from your devices through Tailscale, with nightly backups and a weekly copy to your PC. Step-by-step guide: **[DEPLOY.md](DEPLOY.md)**.
 
 ## Troubleshooting
 
@@ -108,9 +112,14 @@ app/
   web/                             pages (Jinja2 + HTMX), CSS, PWA manifest
   bot/__main__.py                  Telegram bot
 scripts/import_csv.py              CSV import
+scripts/backup_db.py               consistent DB backup, keeps 14 days
+scripts/pull_backup.ps1            weekly copy of the newest backup to the PC
+scripts/server/bootstrap.sh        one-time server setup (Docker, Tailscale, updates)
 tests/                             pytest
 start_up.ps1                       starts web app + bot (Windows)
 .env.example                       template for TELEGRAM_TOKEN / ALLOWED_CHAT_ID
+Dockerfile, docker-compose.yml     production containers (web + bot)
+DEPLOY.md                          deployment guide
 ```
 
 ## Tests

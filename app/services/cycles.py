@@ -35,29 +35,48 @@ def recompute_lengths(session: Session) -> None:
 
 
 def add_cycle(session: Session, start: date, source: str = "web", today: date | None = None) -> Cycle:
-    today = today or date.today()
-    if start > today:
-        raise CycleError("La data non può essere nel futuro.")
-    existing = session.exec(select(Cycle).where(Cycle.start_date == start)).first()
-    if existing:
-        raise CycleError(f"Il ciclo del {start:%d/%m/%Y} è già registrato.")
-    # Two starts closer than min_length days are almost certainly a typo.
-    near = session.exec(
-        select(Cycle).where(
-            Cycle.start_date > start - timedelta(days=settings.min_length - 5),
-            Cycle.start_date < start + timedelta(days=settings.min_length - 5),
-        )
-    ).first()
-    if near:
-        raise CycleError(
-            f"C'è già un inizio il {near.start_date:%d/%m/%Y}, troppo vicino. Elimina quello prima, se è sbagliato."
-        )
+    _validate_start(session, start, today or date.today())
     cycle = Cycle(start_date=start, end_date=start, source=source)
     session.add(cycle)
     session.commit()
     recompute_lengths(session)
     session.refresh(cycle)
     return cycle
+
+
+def update_cycle(session: Session, cycle_id: int, start: date, today: date | None = None) -> Cycle:
+    """Changes the start date of an existing entry (lengths and gaps are recomputed)."""
+    cycle = session.get(Cycle, cycle_id)
+    if cycle is None:
+        raise CycleError("Ciclo non trovato.")
+    if cycle.start_date == start:
+        return cycle
+    _validate_start(session, start, today or date.today(), exclude_id=cycle_id)
+    cycle.start_date = start
+    session.add(cycle)
+    session.commit()
+    recompute_lengths(session)
+    session.refresh(cycle)
+    return cycle
+
+
+def _validate_start(session: Session, start: date, today: date, exclude_id: int | None = None) -> None:
+    if start > today:
+        raise CycleError("La data non può essere nel futuro.")
+    others = select(Cycle).where(Cycle.id != exclude_id) if exclude_id is not None else select(Cycle)
+    if session.exec(others.where(Cycle.start_date == start)).first():
+        raise CycleError(f"Il ciclo del {start:%d/%m/%Y} è già registrato.")
+    # Two starts closer than min_length - 5 days are almost certainly a typo.
+    near = session.exec(
+        others.where(
+            Cycle.start_date > start - timedelta(days=settings.min_length - 5),
+            Cycle.start_date < start + timedelta(days=settings.min_length - 5),
+        )
+    ).first()
+    if near:
+        raise CycleError(
+            f"C'è già un inizio il {near.start_date:%d/%m/%Y}, troppo vicino. Correggi o elimina quello, se è sbagliato."
+        )
 
 
 def delete_cycle(session: Session, cycle_id: int) -> None:

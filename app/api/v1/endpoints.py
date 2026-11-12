@@ -5,7 +5,7 @@ from sqlmodel import Session
 from app.db import get_session
 from app.forecasting.backtest import cached_backtest
 from app.schemas import BacktestOut, CycleIn, CycleOut, PredictionOut
-from app.services.cycles import CycleError, add_cycle, delete_cycle, list_cycles, valid_lengths
+from app.services.cycles import CycleError, add_cycle, delete_cycle, list_cycles, update_cycle, valid_lengths
 from app.services.forecast import current_prediction
 from app.stats import chart_png, compute_stats
 
@@ -36,6 +36,14 @@ def post_cycle(body: CycleIn, session: Session = Depends(get_session)):
         return add_cycle(session, body.start_date, source="api")
     except CycleError as exc:
         raise HTTPException(400, str(exc))
+
+
+@router.patch("/cycles/{cycle_id}", response_model=CycleOut)
+def patch_cycle(cycle_id: int, body: CycleIn, session: Session = Depends(get_session)):
+    try:
+        return update_cycle(session, cycle_id, body.start_date)
+    except CycleError as exc:
+        raise HTTPException(404 if "non trovato" in str(exc) else 400, str(exc))
 
 
 @router.delete("/cycles/{cycle_id}", status_code=204)

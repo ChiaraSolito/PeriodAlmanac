@@ -45,8 +45,8 @@ def chart_png(session: Session, n: int = 36) -> bytes:
         xs = [c.start_date for c in cycles]
         ys = [c.cycle_length for c in cycles]
         med = statistics.median(ys)
-        ax.axhline(med, color="#9a9a9a", lw=1, ls="--", label=f"mediana {med:g} gg")
-        ax.plot(xs, ys, marker="o", ms=3.5, color="#c2185b", lw=1.6)
+        ax.axhline(med, color="#68C32F", lw=1.4, ls="--", label=f"mediana {med:g} gg")
+        ax.plot(xs, ys, marker="o", ms=4, color="#C38BFF", lw=2, markeredgecolor="#6a2fc0", markerfacecolor="#C38BFF")
         ax.legend(frameon=False, fontsize=8, loc="upper left")
     ax.set_ylabel("durata (giorni)")
     ax.set_title("Durata degli ultimi cicli", fontsize=10)

@@ -3,26 +3,58 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#c2185b">
+  <meta name="theme-color" content="#faf7fd" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#15121b" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Ciclo">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="PeriodAlmanac">
   <link rel="manifest" href="/static/manifest.json">
   <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/icon-192.png">
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=3">
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
-  <title>Ciclo</title>
+  <script src="/static/app.js?v=2" defer></script>
+  <title>{% block title %}PeriodAlmanac{% endblock %}</title>
 </head>
 <body hx-boost="true">
   <main>
-    {% if request.query_params.get('ok') %}<div class="flash ok">{{ request.query_params.get('ok') }}</div>{% endif %}
-    {% if request.query_params.get('err') %}<div class="flash err">{{ request.query_params.get('err') }}</div>{% endif %}
+    {% set ok = request.query_params.get('ok') %}
+    {% set err = request.query_params.get('err') %}
+    {% set undo = request.query_params.get('undo') %}
+    {% if ok or err %}
+    <div class="toast {{ 'err' if err else 'ok' }}" role="status" data-toast>
+      <span>{{ err or ok }}</span>
+      {% if ok and undo %}
+      <form method="post" action="/storico/{{ undo }}/elimina">
+        <input type="hidden" name="next" value="{{ this_url or request.url.path }}">
+        <button class="link">Annulla</button>
+      </form>
+      {% endif %}
+      <button class="icon-btn" type="button" aria-label="Chiudi" data-dismiss>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
-  <nav class="tabs">
-    <a href="/" class="{{ 'on' if page == 'home' }}">Previsione</a>
-    <a href="/storico" class="{{ 'on' if page == 'storico' }}">Storico</a>
-    <a href="/statistiche" class="{{ 'on' if page == 'statistiche' }}">Statistiche</a>
+
+  <nav class="tabs" aria-label="Sezioni">
+    <a href="/" {% if page == 'home' %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/></svg>
+      <span>Oggi</span>
+    </a>
+    <a href="/calendario" {% if page == 'calendario' %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+      <span>Calendario</span>
+    </a>
+    <a href="/storico" {% if page == 'storico' %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+      <span>Storico</span>
+    </a>
+    <a href="/statistiche" {% if page == 'statistiche' %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      <span>Statistiche</span>
+    </a>
   </nav>
 </body>
 </html>

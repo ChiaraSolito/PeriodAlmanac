@@ -4,7 +4,10 @@ from datetime import date
 from app.forecasting.predictor import Prediction
 
 MESI = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
+MESI_LUNGHI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
+               "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
 GIORNI = ["lun", "mar", "mer", "gio", "ven", "sab", "dom"]
+GIORNI_LUNGHI = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
 
 STATUS = {
     "in_arrivo": "in arrivo",
@@ -19,11 +22,22 @@ def fmt(d: date, weekday: bool = False) -> str:
     return f"{GIORNI[d.weekday()]} {s}" if weekday else s
 
 
+def fmt_long(d: date) -> str:
+    """'giovedì 12 novembre'."""
+    return f"{GIORNI_LUNGHI[d.weekday()]} {d.day} {MESI_LUNGHI[d.month - 1]}"
+
+
+def month_title(year: int, month: int) -> str:
+    return f"{MESI_LUNGHI[month - 1]} {year}"
+
+
 def method_label(p: Prediction) -> str:
     if p.method == "statistica":
         return "mediana (pochi dati)"
     if p.method == "fallback_mediana":
         return f"mediana ultimi 12 cicli (il modello {p.model_name} dava {p.model_raw:g} gg, troppo lontano)"
+    if p.mae is None:
+        return f"modello {p.model_name} (errore non ancora stimabile: servono più cicli)"
     return f"modello {p.model_name} (errore medio ±{p.mae:.1f} gg)"
 
 

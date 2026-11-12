@@ -1,16 +1,22 @@
 {% extends "base.html" %}
+{% block title %}Statistiche · PeriodAlmanac{% endblock %}
 {% block content %}
-<h1>Statistiche</h1>
+<header class="page-head">
+  <p class="eyebrow">{{ s.count }} inizi registrati</p>
+  <h1>Statistiche</h1>
+</header>
 {% if s.mean is defined %}
 <div class="tiles">
-  <div><span>{{ s.recent_median }}</span>mediana ultimi 12</div>
-  <div><span>{{ s.mean }}</span>media storica</div>
-  <div><span>±{{ s.std }}</span>deviazione</div>
-  <div><span>{{ s.min }}–{{ s.max }}</span>min–max</div>
+  <div class="tile accent"><span class="tile-value">{{ s.recent_median }}</span><span class="tile-label">giorni, tipico (ultimi 12)</span></div>
+  <div class="tile"><span class="tile-value">{{ s.mean }}</span><span class="tile-label">media storica</span></div>
+  <div class="tile"><span class="tile-value">±{{ s.std }}</span><span class="tile-label">variabilità</span></div>
+  <div class="tile"><span class="tile-value">{{ s.min }}–{{ s.max }}</span><span class="tile-label">più breve – più lungo</span></div>
 </div>
-<p>Tendenza: <strong>{{ s.trend }}</strong> · {{ s.count }} cicli registrati{% if s.gaps %} · {{ s.gaps }} intervalli esclusi{% endif %}</p>
-<img class="chart" src="/api/v1/stats/chart.png" alt="Grafico della durata dei cicli">
+<p class="card trend">Tendenza recente: <strong>{{ s.trend }}</strong>{% if s.gaps %} · {{ s.gaps }} intervalli esclusi perché più lunghi di 45 giorni{% endif %}</p>
+<figure class="card chart-card">
+  <img class="chart" src="/api/v1/stats/chart.png" alt="Grafico della durata degli ultimi cicli" loading="lazy">
+</figure>
 {% else %}
-<p>Dati insufficienti.</p>
+<section class="card empty"><p>Servono almeno due inizi registrati per le statistiche.</p></section>
 {% endif %}
 {% endblock %}

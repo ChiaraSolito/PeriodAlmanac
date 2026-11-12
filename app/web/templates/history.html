@@ -1,24 +1,58 @@
 {% extends "base.html" %}
+{% block title %}Storico · PeriodAlmanac{% endblock %}
 {% block content %}
-<h1>Storico</h1>
-<ul class="list">
-  {% for c in cycles %}
-  <li>
-    <div>
-      <strong>{{ fmt(c.start_date) }}</strong> → {{ fmt(c.end_date) }}
-      <div class="muted">
-        {% if c.cycle_length is none %}primo registrato
-        {% elif c.is_gap %}{{ c.cycle_length }} gg · <span class="tag">intervallo escluso</span>
-        {% else %}{{ c.cycle_length }} gg{% endif %}
-      </div>
-    </div>
-    <form method="post" action="/storico/{{ c.id }}/elimina"
-          onsubmit="return confirm('Eliminare il ciclo del {{ fmt(c.start_date) }}?')">
-      <button class="ghost" aria-label="Elimina">✕</button>
-    </form>
-  </li>
-  {% else %}
-  <li>Nessun ciclo registrato.</li>
-  {% endfor %}
-</ul>
+<header class="page-head">
+  <p class="eyebrow">{{ count }} inizi registrati{% if typical %} · tipico {{ typical }} giorni{% endif %}</p>
+  <h1>Storico</h1>
+</header>
+
+{% for year, cycles in years %}
+<section class="year">
+  <h2 class="year-title">{{ year }}</h2>
+  <ul class="list card">
+    {% for c in cycles %}
+    <li id="c{{ c.id }}" class="{{ 'editing' if edit == c.id }}">
+      {% if edit == c.id %}
+        <form method="post" action="/storico/{{ c.id }}/modifica" class="edit-form">
+          <label for="edit-{{ c.id }}">Nuova data di inizio</label>
+          <div class="row">
+            <input id="edit-{{ c.id }}" type="date" name="start_date" value="{{ c.start_date.isoformat() }}"
+                   max="{{ today.isoformat() }}" required autofocus>
+            <button class="btn primary">Salva</button>
+          </div>
+          <a class="link" href="/storico#c{{ c.id }}">Annulla</a>
+        </form>
+      {% else %}
+        <div class="entry">
+          <strong>{{ fmt(c.start_date, True) }}</strong>
+          <span class="muted">fino al {{ fmt(c.end_date) }}</span>
+        </div>
+        {% if c.cycle_length is none %}
+          <span class="chip">primo</span>
+        {% elif c.is_gap %}
+          <span class="chip chip-warn" title="Intervallo > 45 giorni: escluso dalle statistiche">{{ c.cycle_length }} gg · escluso</span>
+        {% else %}
+          {% set diff = c.cycle_length - typical if typical else 0 %}
+          <span class="chip {{ 'chip-off' if diff|abs > 3 }}"
+                title="{% if diff > 0 %}+{% endif %}{{ diff }} rispetto al tipico">{{ c.cycle_length }} gg</span>
+        {% endif %}
+        <div class="actions">
+          <a class="icon-btn" href="/storico?edit={{ c.id }}#c{{ c.id }}" aria-label="Modifica {{ fmt(c.start_date) }}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>
+          </a>
+          <form method="post" action="/storico/{{ c.id }}/elimina"
+                onsubmit="return confirm('Eliminare l\'inizio del {{ fmt(c.start_date) }}?')">
+            <button class="icon-btn danger" aria-label="Elimina {{ fmt(c.start_date) }}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% else %}
+<section class="card empty"><p>Nessun inizio registrato.</p></section>
+{% endfor %}
 {% endblock %}

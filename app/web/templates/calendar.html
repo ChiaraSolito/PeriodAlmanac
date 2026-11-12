@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Calendario · PeriodAlmanac{% endblock %}
+{% block content %}
+<header class="page-head cal-head">
+  <a class="icon-btn" href="/calendario?m={{ cal.prev.strftime('%Y-%m') }}" aria-label="Mese precedente">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+  </a>
+  <h1>{{ month_title(cal.year, cal.month)|capitalize }}</h1>
+  <a class="icon-btn" href="/calendario?m={{ cal.next.strftime('%Y-%m') }}" aria-label="Mese successivo">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+  </a>
+</header>
+{% if (cal.year, cal.month) != (today.year, today.month) %}
+<p class="center"><a class="link" href="/calendario">Torna a oggi</a></p>
+{% endif %}
+
+<div class="cal card" role="grid" aria-label="{{ month_title(cal.year, cal.month) }}">
+  <div class="cal-row cal-weekdays" role="row">
+    {% for w in WEEKDAYS %}<span role="columnheader">{{ w }}</span>{% endfor %}
+  </div>
+  {% for week in cal.weeks %}
+  <div class="cal-row" role="row">
+    {% for d in week %}
+      {% set label = fmt_long(d.date) %}
+      {% if d.start_id %}
+        <a class="{{ d.classes }}" role="gridcell" href="/storico?edit={{ d.start_id }}#c{{ d.start_id }}"
+           aria-label="{{ label }}: inizio registrato, tocca per modificare">{{ d.date.day }}</a>
+      {% elif not d.is_future and not d.period %}
+        <button type="button" class="{{ d.classes }}" role="gridcell"
+                data-log-date="{{ d.date.isoformat() }}" data-label="{{ label }}"
+                aria-label="{{ label }}{% if d.predicted %}: previsto{% elif d.window %}: nella finestra{% endif %}. Tocca per registrare un inizio">{{ d.date.day }}</button>
+      {% else %}
+        <span class="{{ d.classes }}" role="gridcell"
+              aria-label="{{ label }}{% if d.period %}: ciclo{% elif d.predicted %}: previsto{% elif d.projected %}: stimato{% elif d.window %}: nella finestra{% endif %}">{{ d.date.day }}</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+
+<ul class="legend" aria-label="Legenda">
+  <li><span class="swatch period"></span>Ciclo registrato</li>
+  <li><span class="swatch predicted"></span>Previsto</li>
+  <li><span class="swatch window"></span>Finestra</li>
+  <li><span class="swatch projected"></span>Stima successiva</li>
+</ul>
+
+{% if cal.events %}
+<ul class="events card">
+  {% for day, what in cal.events %}
+  <li><span>{{ what }}</span><strong>{{ fmt_long(day) }}</strong></li>
+  {% endfor %}
+</ul>
+{% endif %}
+<p class="hint">Tocca un giorno passato per registrare un inizio, o un inizio registrato per modificarlo.</p>
+
+<dialog id="log-dialog" class="sheet" aria-labelledby="log-dialog-title">
+  <form method="post" action="/log">
+    <h2 id="log-dialog-title">Registrare un inizio?</h2>
+    <p>Il ciclo è iniziato <strong data-label></strong>.</p>
+    <input type="hidden" name="start_date">
+    <input type="hidden" name="next" value="{{ this_url }}">
+    <div class="row">
+      <button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Annulla</button>
+      <button class="btn primary">Registra</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

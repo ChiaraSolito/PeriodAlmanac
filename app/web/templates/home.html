@@ -1,35 +1,80 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Prossimo ciclo</h1>
-{% if p %}
-  {% if p.status == 'dimenticato' %}
-  <div class="flash warn">
-    L'ultimo inizio registrato è del {{ fmt(p.last_start) }}, cioè {{ -p.days_to_start + p.length }} giorni fa.
-    Hai dimenticato di registrare qualche ciclo? Aggiungi le date mancanti qui sotto.
-  </div>
-  {% endif %}
-  <section class="card status-{{ p.status }}">
-    <div class="big">{{ fmt(p.start, True) }}</div>
-    <div class="when">{{ when(p.days_to_start) }} · {{ STATUS[p.status] }}</div>
-    <dl>
-      <dt>Finestra</dt><dd>{{ fmt(p.window_low) }} – {{ fmt(p.window_high) }}</dd>
-      <dt>Fine prevista</dt><dd>{{ fmt(p.end) }}</dd>
-      <dt>Durata stimata</dt><dd>{{ p.length }} giorni</dd>
-      <dt>Ultimo inizio</dt><dd>{{ fmt(p.last_start) }}</dd>
-    </dl>
-    <p class="muted">Metodo: {{ method_label(p) }}</p>
+<header class="page-head">
+  <p class="eyebrow">{{ fmt_long(today) }}</p>
+  <h1>Oggi</h1>
+</header>
+
+{% if not p %}
+  <section class="card empty">
+    <h2>Ciao!</h2>
+    <p>Registra almeno due inizi per ottenere la prima previsione.</p>
   </section>
+
+{% elif p.status == 'dimenticato' %}
+  <section class="card notice">
+    <h2>Mancano dei dati</h2>
+    <p>L'ultimo inizio registrato è del <strong>{{ fmt(p.last_start) }}</strong>, {{ (today - p.last_start).days }} giorni fa.
+       Probabilmente qualche ciclo non è stato registrato: aggiungi le date mancanti per avere di nuovo una previsione.</p>
+    <a class="btn" href="/calendario">Apri il calendario</a>
+  </section>
+
 {% else %}
-  <p>Registra almeno due inizi per ottenere una previsione.</p>
+  <section class="card hero status-{{ p.status }}">
+    <div class="ring" role="img"
+         aria-label="Giorno {{ ring.cycle_day }} del ciclo, prossimo inizio previsto {{ fmt(p.start) }}">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="ring-track" cx="60" cy="60" r="52" pathLength="100"/>
+        <circle class="ring-window" cx="60" cy="60" r="52" pathLength="100"
+                stroke-dasharray="{{ ring.window_len }} {{ 100 - ring.window_len }}"
+                stroke-dashoffset="{{ -ring.window_from }}"/>
+        <circle class="ring-progress" cx="60" cy="60" r="52" pathLength="100"
+                stroke-dasharray="{{ ring.progress }} {{ 100 - ring.progress }}"/>
+        <circle class="ring-marker" cx="{{ ring.marker_x }}" cy="{{ ring.marker_y }}" r="5"/>
+      </svg>
+      <div class="ring-label">
+        <span class="ring-day">{{ ring.cycle_day }}</span>
+        <span class="ring-sub">giorno del ciclo</span>
+      </div>
+    </div>
+
+    <div class="hero-text">
+      <p class="eyebrow">Prossimo ciclo</p>
+      <p class="big">{{ fmt_long(p.start) }}</p>
+      <p class="chip chip-{{ p.status }}">
+        {% if p.status == 'in_ritardo' %}In ritardo di {{ -p.days_to_start }} giorni
+        {% elif p.status == 'finestra' %}Nella finestra prevista · {{ when(p.days_to_start) }}
+        {% else %}{{ when(p.days_to_start)|capitalize }}{% endif %}
+      </p>
+    </div>
+  </section>
+
+  <dl class="facts">
+    <div><dt>Finestra</dt><dd>{{ fmt(p.window_low) }} – {{ fmt(p.window_high) }}</dd></div>
+    <div><dt>Fine prevista</dt><dd>{{ fmt(p.end) }}</dd></div>
+    <div><dt>Durata stimata</dt><dd>{{ p.length }} giorni</dd></div>
+    <div><dt>Ultimo inizio</dt><dd>{{ fmt(p.last_start) }}</dd></div>
+  </dl>
+
+  <details class="how">
+    <summary>Come è calcolato?</summary>
+    <p>{{ method_label(p) }}. La finestra comprende le durate più tipiche degli ultimi 12 cicli.</p>
+  </details>
 {% endif %}
 
-<h2>Registra un inizio</h2>
-<form method="post" action="/log" class="row">
-  <input type="hidden" name="start_date" value="{{ today }}">
-  <button class="primary">È iniziato oggi</button>
-</form>
-<form method="post" action="/log" class="row">
-  <input type="date" name="start_date" max="{{ today }}" required>
-  <button>Salva data</button>
-</form>
+<section class="log">
+  <h2>È iniziato?</h2>
+  <form method="post" action="/log">
+    <input type="hidden" name="start_date" value="{{ today.isoformat() }}">
+    <button class="btn primary wide">È iniziato oggi</button>
+  </form>
+  <details class="other-date">
+    <summary class="btn ghost wide">Scegli un'altra data</summary>
+    <form method="post" action="/log" class="row">
+      <label class="sr-only" for="other-date">Data di inizio</label>
+      <input id="other-date" type="date" name="start_date" max="{{ today.isoformat() }}" required>
+      <button class="btn">Salva</button>
+    </form>
+  </details>
+</section>
 {% endblock %}

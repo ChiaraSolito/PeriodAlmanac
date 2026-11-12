@@ -1,3 +1,4 @@
+import math
 import statistics
 from dataclasses import asdict, dataclass
 from datetime import date, timedelta
@@ -39,11 +40,13 @@ def predict_length(lengths: list[int]) -> tuple[float, str, str | None, float | 
     recent = lengths[-12:]
     med = float(statistics.median(recent))
     tol = max(3.0, 1.5 * float(np.std(recent)))
+    # With too few cycles the backtest has nothing to score (MAE = inf): report "unknown", not infinity.
+    mae = bt.scores[bt.best] if math.isfinite(bt.scores[bt.best]) else None
 
     out_of_range = not (settings.min_length <= raw <= settings.max_length)
     if out_of_range or abs(raw - med) > tol:
-        return med, "fallback_mediana", bt.best, raw, bt.scores[bt.best]
-    return raw, f"modello:{bt.best}", bt.best, raw, bt.scores[bt.best]
+        return med, "fallback_mediana", bt.best, raw, mae
+    return raw, f"modello:{bt.best}", bt.best, raw, mae
 
 
 def predict(last_start: date, lengths: list[int], today: date | None = None) -> Prediction:

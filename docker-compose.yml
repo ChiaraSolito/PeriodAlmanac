@@ -1,0 +1,35 @@
+# Production setup: web app + Telegram bot sharing the SQLite database in ./data.
+# Start / update:  docker compose up -d --build
+# Logs:            docker compose logs -f bot   (or web)
+
+x-common: &common
+  build: .
+  image: periodalmanac:latest
+  env_file: .env
+  environment:
+    TZ: Europe/Rome
+  volumes:
+    - ./data:/app/data
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  web:
+    <<: *common
+    # Bound to localhost only: the web app is reached through `tailscale serve`, never directly from the internet.
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  bot:
+    <<: *common
+    command: ["python", "-m", "app.bot"]
